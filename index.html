@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Suvie’s Editing Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-top">
+      <h1 class="logo">Suvie’s Editing Hub</h1>
+      <div class="nav-right">
+        <button id="profileButton" class="profile-button hidden" type="button" aria-label="Open profile settings">
+          <img id="profileAvatar" class="profile-avatar" src="" alt="Profile" />
+          <span id="profileName" class="profile-name">Guest</span>
+        </button>
+        <span id="userInfo" class="user-info"></span>
+        <select id="themeSelect" class="theme-picker" aria-label="Select theme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="purple">Purple</option>
+        </select>
+        <input id="accentColor" class="accent-picker" type="color" title="Pick accent color">
+        <button id="applyAccentBtn" class="accent-apply-btn" type="button">Apply Color</button>
+        <button id="loginBtn" onclick="window.location.href='auth.html?mode=login'">Login</button>
+        <button id="signupBtn" onclick="window.location.href='auth.html?mode=signup'">Sign Up</button>
+        <button id="logoutBtn" style="display:none;">Logout</button>
+      </div>
+    </div>
+    <div class="header-main">
+      <nav class="nav-left">
+        <button onclick="openTab('home')" data-tab="home">Home</button>
+        <button onclick="openTab('anime')" data-tab="anime">Anime Edits</button>
+        <button onclick="openTab('sfx')" data-tab="sfx">SFX</button>
+        <button onclick="openTab('vfx')" data-tab="vfx">VFX</button>
+        <button onclick="openTab('twixtors')" data-tab="twixtors">Twixtors</button>
+        <button onclick="openTab('clips')" data-tab="clips">Clips</button>
+      </nav>
+      <div class="header-search">
+        <input type="search" id="searchInput" placeholder="Search for edits, SFX, VFX, Twixtors..." onkeydown="if(event.key === 'Enter'){searchFiles();}">
+        <button type="button" onclick="searchFiles()">Search</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="tabcontent" style="display: block;">
+      <div class="home-intro">
+        <h2>Search your material</h2>
+        <p>Type a file name, category, or folder to find it quickly.</p>
+      </div>
+      <div class="home-recommend">
+        <span class="home-badge">Recommended</span>
+        <h3>You might want to watch this edit — it’s peak.</h3>
+        <p>Try searching for “Twixtor”, “Demon Slayer”, or “Phonk Edits” to find standout clips fast.</p>
+      </div>
+
+      <div id="accountPanel" class="account-panel">
+        <div class="account-header">
+          <div>
+            <h3>My account storage</h3>
+            <p id="accountStatus">Sign in to upload and save files.</p>
+          </div>
+        </div>
+        <div class="upload-notice">
+          Upload a file and it will be shared in the community library so everyone can discover it here.
+        </div>
+        <div class="account-actions">
+          <input id="userUploadFile" type="file" aria-label="Select file to upload" />
+          <select id="uploadTargetFolder" class="folder-select" aria-label="Choose upload folder">
+            <option value="user-uploads">My Files</option>
+            <option value="edits">Edits</option>
+            <option value="sfx">SFX</option>
+            <option value="vfx">VFX</option>
+            <option value="twixtors">Twixtors</option>
+            <option value="clips">Clips</option>
+          </select>
+          <button id="uploadUserFileBtn" type="button">Upload to Folder</button>
+          <button id="downloadBtn" type="button" style="display:none;">Download Files</button>
+        </div>
+        <div id="userFiles" class="user-files"></div>
+        <div class="community-header">
+          <h4>Community uploads</h4>
+          <p>Everyone can browse shared uploads from the hub.</p>
+        </div>
+        <div id="communityUploads" class="user-files"></div>
+      </div>
+
+      <div id="profileModal" class="profile-modal hidden">
+        <div class="profile-modal-content">
+          <button class="profile-modal-close" type="button" onclick="toggleProfileModal(false)">×</button>
+          <h3>Profile settings</h3>
+          <p>Update your display name and profile photo.</p>
+          <form id="profileForm" class="profile-form">
+            <label for="profileDisplayName">Display Name</label>
+            <input id="profileDisplayName" type="text" placeholder="Your nickname" />
+            <label for="profilePhotoFile">Profile Photo</label>
+            <input id="profilePhotoFile" type="file" accept="image/*" />
+            <button type="submit">Save Profile</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="results" class="results-panel"></div>
+    </section>
+
+    <section id="anime" class="tabcontent">
+      <h2>Anime Edits</h2>
+      <p>Browse all your phonk and song edits.</p>
+      
+      <!-- Video Player Section -->
+      <div id="videoPlayerContainer" class="video-player-container hidden">
+        <button class="return-button" onclick="closeVideoPlayer()">← Return to Grid</button>
+        <div class="video-player-wrapper">
+          <div class="video-title" id="videoTitle">Video Title</div>
+          <video id="videoPlayer" class="video-player" controls>
+            <source src="" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <div id="videoNavButtons" class="video-nav-buttons" style="display: none;">
+            <button id="videoPrevBtn" class="video-nav-btn" onclick="playPreviousVideo()">← Previous</button>
+            <span id="videoCounter" class="video-counter">1 / 1</span>
+            <button id="videoNextBtn" class="video-nav-btn" onclick="playNextVideo()">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid View Section -->
+      <div id="gridViewContainer" class="grid-view-container">
+      <div class="library-section">
+        <h3>🎵 Phonk Edits</h3>
+        <div class="folder-grid">
+          <a href="Anime Edits/Phonk Edits/Funk Sereno/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Funk Sereno</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Alquima/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Alquima</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Elder/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Elder</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Ritmada/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Ritmada</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Salesman Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Salesman Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Toma No Bailao/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Toma No Bailao</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Batidao Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Batidao Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Leva Leva/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Leva Leva</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Bebado/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Bebado</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Farao/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Farao</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Santa Fe 2/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Santa Fe 2</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Noot Noot Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Noot Noot Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Sem Tempo/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Sem Tempo</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Xonada Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Xonada Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Dream Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Dream Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Love For You Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Love For You Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Eclipse/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Eclipse</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Rabeta/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Rabeta</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Montagem Tentana/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Montagem Tentana</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Rebola Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Rebola Funk</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Phonk Edits/Stephanie Funk/" class="folder-card"><div class="folder-thumbnail">🎵</div><div class="folder-info"><div class="folder-name">Stephanie Funk</div><div class="folder-meta">Browse</div></div></a>
+        </div>
+      </div>
+      <div class="library-section">
+        <h3>🎶 Song Edits</h3>
+        <div class="folder-grid">
+          <a href="Anime Edits/Song Edits/Babydoll - Dominic Fike/" class="folder-card"><div class="folder-thumbnail">🎶</div><div class="folder-info"><div class="folder-name">Babydoll - Dominic Fike</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Song Edits/Big Guy/" class="folder-card"><div class="folder-thumbnail">🎶</div><div class="folder-info"><div class="folder-name">Big Guy</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Song Edits/Don't Copy My Flow/" class="folder-card"><div class="folder-thumbnail">🎶</div><div class="folder-info"><div class="folder-name">Don't Copy My Flow</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Song Edits/Love For You/" class="folder-card"><div class="folder-thumbnail">🎶</div><div class="folder-info"><div class="folder-name">Love For You</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Song Edits/Moulaga/" class="folder-card"><div class="folder-thumbnail">🎶</div><div class="folder-info"><div class="folder-name">Moulaga</div><div class="folder-meta">Browse</div></div></a>
+          <a href="Anime Edits/Song Edits/Stephanie - Nafeesisboujee/" class="folder-card"><div class="folder-thumbnail">🎶</div><div class="folder-info"><div class="folder-name">Stephanie - Nafeesisboujee</div><div class="folder-meta">Browse</div></div></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="sfx" class="tabcontent">
+      <h2>SFX</h2>
+      <p>Find sound effects sorted by category.</p>
+      
+      <!-- Audio Player Section -->
+      <div id="audioPlayerContainer" class="audio-player-container hidden">
+        <button class="return-button" onclick="closeAudioPlayer()">← Return to Grid</button>
+        <div class="audio-player-wrapper">
+          <div class="audio-title" id="audioTitle">Audio Title</div>
+          <audio id="audioPlayer" class="audio-player" controls>
+            <source src="" type="audio/mpeg">
+            Your browser does not support the audio tag.
+          </audio>
+          <div id="audioNavButtons" class="audio-nav-buttons" style="display: none;">
+            <button id="audioPrevBtn" class="audio-nav-btn" onclick="playPreviousAudio()">← Previous</button>
+            <span id="audioCounter" class="audio-counter">1 / 1</span>
+            <button id="audioNextBtn" class="audio-nav-btn" onclick="playNextAudio()">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid View Section -->
+      <div id="audioGridViewContainer" class="grid-view-container">
+      <div class="folder-grid">
+        <a href="SFX/Booms/" class="folder-card"><div class="folder-thumbnail">💥</div><div class="folder-info"><div class="folder-name">Booms</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Buildups/" class="folder-card"><div class="folder-thumbnail">📈</div><div class="folder-info"><div class="folder-name">Buildups</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Camera/" class="folder-card"><div class="folder-thumbnail">📸</div><div class="folder-info"><div class="folder-name">Camera</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Clock/" class="folder-card"><div class="folder-thumbnail">⏰</div><div class="folder-info"><div class="folder-name">Clock</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Cloth/" class="folder-card"><div class="folder-thumbnail">👕</div><div class="folder-info"><div class="folder-name">Cloth</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Electric/" class="folder-card"><div class="folder-thumbnail">⚡</div><div class="folder-info"><div class="folder-name">Electric</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Enviroment/" class="folder-card"><div class="folder-thumbnail">🌍</div><div class="folder-info"><div class="folder-name">Environment</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Heartbeat/" class="folder-card"><div class="folder-thumbnail">❤️</div><div class="folder-info"><div class="folder-name">Heartbeat</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Impacts/" class="folder-card"><div class="folder-thumbnail">💢</div><div class="folder-info"><div class="folder-name">Impacts</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Magic/" class="folder-card"><div class="folder-thumbnail">✨</div><div class="folder-info"><div class="folder-name">Magic</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Random/" class="folder-card"><div class="folder-thumbnail">🎲</div><div class="folder-info"><div class="folder-name">Random</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Sci-Fi/" class="folder-card"><div class="folder-thumbnail">🚀</div><div class="folder-info"><div class="folder-name">Sci-Fi</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Sword/" class="folder-card"><div class="folder-thumbnail">⚔️</div><div class="folder-info"><div class="folder-name">Sword</div><div class="folder-meta">Play</div></div></a>
+        <a href="SFX/Whooshes/" class="folder-card"><div class="folder-thumbnail">💨</div><div class="folder-info"><div class="folder-name">Whooshes</div><div class="folder-meta">Play</div></div></a>
+      </div>
+      </div>
+    </section>
+
+    <section id="vfx" class="tabcontent">
+      <h2>VFX</h2>
+      <p>Use these visual effects folders for your edits.</p>
+      
+      <!-- VFX Video Player Section -->
+      <div id="vfxPlayerContainer" class="video-player-container hidden">
+        <button class="return-button" onclick="closeVFXPlayer()">← Return to Grid</button>
+        <div class="video-player-wrapper">
+          <div class="video-title" id="vfxVideoTitle">Video Title</div>
+          <video id="vfxPlayer" class="video-player" controls>
+            <source src="" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <div id="vfxNavButtons" class="video-nav-buttons" style="display: none;">
+            <button id="vfxPrevBtn" class="video-nav-btn" onclick="playPreviousVFX()">← Previous</button>
+            <span id="vfxCounter" class="video-counter">1 / 1</span>
+            <button id="vfxNextBtn" class="video-nav-btn" onclick="playNextVFX()">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid View Section -->
+      <div id="vfxGridViewContainer" class="grid-view-container">
+      <div class="folder-grid">
+        <a href="VFX/Backgrounds/" class="folder-card"><div class="folder-thumbnail">🎬</div><div class="folder-info"><div class="folder-name">Backgrounds</div><div class="folder-meta">Play</div></div></a>
+        <a href="VFX/other overlays/" class="folder-card"><div class="folder-thumbnail">🎞️</div><div class="folder-info"><div class="folder-name">Overlays</div><div class="folder-meta">Play</div></div></a>
+        <a href="VFX/Particles/" class="folder-card"><div class="folder-thumbnail">✨</div><div class="folder-info"><div class="folder-name">Particles</div><div class="folder-meta">Play</div></div></a>
+        <a href="VFX/Shockwaves/" class="folder-card"><div class="folder-thumbnail">〰️</div><div class="folder-info"><div class="folder-name">Shockwaves</div><div class="folder-meta">Play</div></div></a>
+      </div>
+      </div>
+    </section>
+
+    <section id="twixtors" class="tabcontent">
+      <h2>Twixtors</h2>
+      <p>Browse the Twixtor anime categories below.</p>
+
+      <div id="twixtorPlayerContainer" class="video-player-container hidden">
+        <button class="return-button" onclick="closeTwixtorPlayer()">← Return to Grid</button>
+        <div class="video-player-wrapper">
+          <div class="video-title" id="twixtorVideoTitle">Video Title</div>
+          <video id="twixtorPlayer" class="video-player" controls>
+            <source src="" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          <div id="twixtorNavButtons" class="video-nav-buttons" style="display: none;">
+            <button id="twixtorPrevBtn" class="video-nav-btn" onclick="playPreviousTwixtor()">← Previous</button>
+            <span id="twixtorCounter" class="video-counter">1 / 1</span>
+            <button id="twixtorNextBtn" class="video-nav-btn" onclick="playNextTwixtor()">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="twixtorGridViewContainer" class="grid-view-container">
+        <div class="folder-grid">
+          <a href="Twixtors/Attack On Titan/" class="folder-card coming-soon-card"><div class="folder-thumbnail">⚔️</div><div class="folder-info"><div class="folder-name">Attack On Titan</div><div class="folder-meta">Coming Soon</div></div></a>
+          <a href="Twixtors/Demon Slayer/" class="folder-card"><div class="folder-thumbnail">🔥</div><div class="folder-info"><div class="folder-name">Demon Slayer</div><div class="folder-meta">Explore</div></div></a>
+          <a href="Twixtors/Jujutsu Kaisen/" class="folder-card"><div class="folder-thumbnail">👹</div><div class="folder-info"><div class="folder-name">Jujutsu Kaisen</div><div class="folder-meta">Explore</div></div></a>
+          <a href="Twixtors/Solo Leveling/" class="folder-card"><div class="folder-thumbnail">👑</div><div class="folder-info"><div class="folder-name">Solo Leveling</div><div class="folder-meta">Explore</div></div></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="clips" class="tabcontent">
+      <h2>Clips</h2>
+      <p>Use the search above to find saved clips and media from Firebase storage.</p>
+      <div id="clipPlaceholder">
+        <div class="coming-soon">
+          <h3>Clips — Coming Soon</h3>
+          <p>We’re building a better clips experience. Stay tuned.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="loginModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h2>Login</h2>
+      <form id="loginForm">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required>
+        <label>Password</label>
+        <input type="password" id="loginPassword" required>
+        <button type="submit">Login</button>
+        <p class="modal-switch">Don’t have an account? <a href="#" onclick="switchToSignup(); return false;">Sign up</a></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="signupModal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h2>Sign Up</h2>
+      <form id="signupForm">
+        <label>Email</label>
+        <input type="email" id="signupEmail" required>
+        <label>Password</label>
+        <input type="password" id="signupPassword" required>
+        <button type="submit">Create Account</button>
+        <p class="modal-switch">Already have an account? <a href="#" onclick="switchToLogin(); return false;">Login</a></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

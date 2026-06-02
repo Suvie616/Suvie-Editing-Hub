@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Suvie’s Editing Hub — Auth</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+</head>
+<body class="auth-page">
+  <header class="auth-header">
+    <div>
+      <h1>Suvie’s Hub</h1>
+      <p>Login or sign up to access your editing resources.</p>
+    </div>
+    <button class="back-button" onclick="window.location.href='index.html'">Back to Home</button>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-card-intro">
+        <span class="eyebrow">Secure access</span>
+        <h2>Sign in or create your Suvie account</h2>
+        <p>Log in to access your edits, downloads, and media tools. New user? Create an account and start editing faster.</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="loginTabBtn" class="auth-tab active" onclick="openAuthTab('login')">Login</button>
+        <button id="signupTabBtn" class="auth-tab" onclick="openAuthTab('signup')">Sign Up</button>
+      </div>
+
+      <div class="auth-panel-wrapper">
+        <section id="loginTab" class="auth-panel">
+          <h3>Welcome back</h3>
+          <p class="auth-panel-description">Enter your details to sign in to your hub.</p>
+          <form id="loginForm" class="auth-form">
+            <label for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" placeholder="you@example.com" required>
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" placeholder="Enter your password" required>
+            <button type="submit">Login</button>
+          </form>
+          <button type="button" class="auth-google-button" onclick="signInWithGoogle()">Continue with Google</button>
+          <p class="auth-note">Don’t have an account? <a href="#" onclick="openAuthTab('signup'); return false;">Sign up</a></p>
+        </section>
+
+        <section id="signupTab" class="auth-panel hidden">
+          <h3>Create your account</h3>
+          <p class="auth-panel-description">Sign up to save your edits and load your media faster.</p>
+          <form id="signupForm" class="auth-form">
+            <label for="signupName">Nickname</label>
+            <input id="signupName" type="text" placeholder="How should we call you?" required>
+            <label for="signupEmail">Email</label>
+            <input id="signupEmail" type="email" placeholder="you@example.com" required>
+            <label for="signupPassword">Password</label>
+            <input id="signupPassword" type="password" placeholder="Create a strong password" required>
+            <label for="signupPhoto">Profile Photo</label>
+            <input id="signupPhoto" type="file" accept="image/*" />
+            <button type="submit">Create Account</button>
+          </form>
+          <button type="button" class="auth-google-button" onclick="signInWithGoogle()">Continue with Google</button>
+          <p class="auth-note">Already have an account? <a href="#" onclick="openAuthTab('login'); return false;">Login</a></p>
+        </section>
+      </div>
+
+      <div id="authMessage" class="auth-message hidden"></div>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+</body>
+</html>
